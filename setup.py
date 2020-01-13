@@ -22,9 +22,7 @@ setup(
     url="https://github.com/jurismarches/cron_install",
     keywords=["cron", "template"],
     python_requires=">=3.6",
-    extras_require={
-        "quality": ["black>=19.10b0", "flake8>=3.7"],
-        "distribute": ["wheel", "twine"]},
+    extras_require={"quality": ["black>=19.10b0", "flake8>=3.7"], "distribute": ["wheel", "twine"]},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",
