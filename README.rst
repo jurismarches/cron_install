@@ -5,7 +5,8 @@ cron_install
 
 A simple command to install a cron table, and make it evolve over time.
 
-.. figure:: cron_install-logo.svg
+|logo|
+
 
 Use it in a deployement task to deploy a file containing your crontab.
 
@@ -56,3 +57,5 @@ will be replaced by the new crontab.
     :alt: Latest PyPI version
 .. |travis| image:: http://img.shields.io/travis/jurismarches/cron_install/master.svg?style=flat
     :target: https://travis-ci.org/jurismarches/cron_install
+
+.. |logo| image:: https://raw.githubusercontent.com/jurismarches/cron_install/master/cron_install-logo.svg
