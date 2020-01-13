@@ -1,6 +1,8 @@
 cron_install
 #############
 
+|pypi-version| |travis|
+
 A simple command to install a cron table, and make it evolve over time.
 
 .. figure:: cron_install-logo.svg
@@ -48,3 +50,9 @@ all the part between `# START MY_PROJECT` and `# END MY_PROJECT`,
 will be replaced by the new crontab.
 
 .. _`python builtin template module`: https://docs.python.org/3.7/library/string.html#template-strings
+
+.. |pypi-version| image:: https://img.shields.io/pypi/v/cron_install.svg
+    :target: https://pypi.python.org/pypi/cron_install
+    :alt: Latest PyPI version
+.. |travis| image:: http://img.shields.io/travis/jurismarches/cron_install/master.svg?style=flat
+    :target: https://travis-ci.org/jurismarches/cron_install
