@@ -38,6 +38,6 @@ setup(
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: System :: Installation/Setup",
         "Topic :: System :: Systems Administration",
-        "Topic :: System :: Utilities",
+        "Topic :: Utilities",
     ],
 )
