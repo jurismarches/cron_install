@@ -1,0 +1,10 @@
+
+
+0.1 - 2020-01-13
+================
+
+NEW
+---
+
+- initial release
+- cron_install can install a file in crontab, surrounded with markers
