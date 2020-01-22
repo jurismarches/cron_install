@@ -34,7 +34,11 @@ class Command:
         return cmd
 
     def cron_actual(self):
-        result = subprocess.run(self.cron_cmd("-l"), capture_output=True)
+        result = subprocess.run(
+            self.cron_cmd("-l"),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         lines = result.stdout.decode("utf-8").split("\n")
         return lines
 
