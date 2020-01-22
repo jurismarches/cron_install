@@ -5,7 +5,7 @@ import textwrap
 from unittest import mock
 from unittest import TestCase
 
-from cron_install import Command
+from cron_install import Command, OptionError
 
 
 @contextlib.contextmanager
@@ -33,6 +33,18 @@ class CronInstallTestCase(TestCase):
         self.assertEqual(last_call[0][0][0], "crontab")
         self.assertEqual(last_call[0][0][-1], "-")
         return last_call[1]["input"].decode("utf-8")
+
+    def test_remove_and_cronpath(self):
+        with self.assertRaises(OptionError) as e:
+            Command(marker="MARK", cron_path="/tmp/cron", remove=True)
+            self.assertEqual(str(e.exception), "Do not use a cronpath with remove option")
+
+    def test_neither_remove_nor_cronpath(self):
+        with self.assertRaises(OptionError) as e:
+            Command(marker="MARK",)
+            self.assertEqual(
+                str(e.exception), "Provide a file to install in crontab, or activate remove option",
+            )
 
     def test_simple_install(self):
         my_cron = textwrap.dedent(
@@ -162,6 +174,49 @@ class CronInstallTestCase(TestCase):
         env = {"ARGS": "baz", "FOO": "foo"}
         with cronfile(my_cron) as fpath, cron_mock([old_cron, ""]) as mocked:
             cmd = Command(marker="MARK", cron_path=fpath, substitutions=env)
+            cmd.run()
+            self.assertEqual(
+                self.installed_crontab(mocked), expected,
+            )
+
+    def test_remove(self):
+        old_cron = textwrap.dedent(
+            """
+            # START MARK
+            22 22 * * * /usr/local/bin/old_prog foo
+            # END MARK
+            # unrelated
+            0 23 1 * * /usr/bin/mail $SPAM $FOO
+            """
+        )
+        expected = textwrap.dedent(
+            """
+            # unrelated
+            0 23 1 * * /usr/bin/mail $SPAM $FOO
+            """
+        )
+        with cron_mock([old_cron, ""]) as mocked:
+            cmd = Command(marker="MARK", remove=True)
+            cmd.run()
+            self.assertEqual(
+                self.installed_crontab(mocked), expected,
+            )
+
+    def test_remove_no_entry(self):
+        old_cron = textwrap.dedent(
+            """
+            # unrelated
+            0 23 1 * * /usr/bin/mail $SPAM $FOO
+            """
+        )
+        expected = textwrap.dedent(
+            """
+            # unrelated
+            0 23 1 * * /usr/bin/mail $SPAM $FOO
+            """
+        )
+        with cron_mock([old_cron, ""]) as mocked:
+            cmd = Command(marker="MARK", remove=True)
             cmd.run()
             self.assertEqual(
                 self.installed_crontab(mocked), expected,

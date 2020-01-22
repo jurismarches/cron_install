@@ -11,12 +11,27 @@ import sys
 from string import Template
 
 
+class OptionError(Exception):
+    """Error in arguments to Command"""
+
+
 class Command:
-    def __init__(self, marker, cron_path, substitutions, user=None):
+    """Handle the actual job of editing crontab
+    """
+
+    def __init__(self, marker, cron_path=None, substitutions={}, user=None, remove=False):
         self.marker = marker
         self.cron_path = cron_path
         self.substitutions = substitutions
         self.user = user
+        self.remove = remove
+        self.check_args()
+
+    def check_args(self):
+        if self.cron_path and self.remove:
+            raise OptionError("Do not use a cronpath with remove option")
+        elif not self.cron_path and not self.remove:
+            raise OptionError("Provide a file to install in crontab, or activate remove option")
 
     @property
     def marker_start(self):
@@ -35,9 +50,7 @@ class Command:
 
     def cron_actual(self):
         result = subprocess.run(
-            self.cron_cmd("-l"),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            self.cron_cmd("-l"), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
         lines = result.stdout.decode("utf-8").split("\n")
         return lines
@@ -52,19 +65,21 @@ class Command:
                 in_block = False
             elif not in_block:
                 yield line
-        # add our commands at the end
-        yield self.marker_start
-        for line in cron_block:
-            yield line
-        yield self.marker_end
+        if not self.remove:
+            # add our commands at the end
+            yield self.marker_start
+            for line in cron_block:
+                yield line
+            yield self.marker_end
 
     def cron_block(self):
-        substitutions = self.substitutions
-        with open(self.cron_path) as f:
-            for line in f:
-                line = line[:-1]  # remove final /n
-                template = Template(line)
-                yield template.substitute(substitutions)
+        if not self.remove:
+            substitutions = self.substitutions
+            with open(self.cron_path) as f:
+                for line in f:
+                    line = line[:-1]  # remove final /n
+                    template = Template(line)
+                    yield template.substitute(substitutions)
 
     def cron_install(self, cron_lines):
         cron_tab = ("\n".join(cron_lines)).encode("utf-8")
@@ -87,19 +102,28 @@ def parse(args=None):
         "-m", "--marker", required=True, help="The marker will be placed around crontab entries"
     )
     parser.add_argument("-u", "--user", help="Wich user crontab to affect")
-    parser.add_argument("cron_path", help="path of commands to update in crontab")
+    parser.add_argument(
+        "--remove", action="store_true", help="Remove lines in crontab associated with marker"
+    )
+    parser.add_argument("cron_path", nargs="?", help="path of commands to update in crontab")
+
     return parser.parse_args(args)
 
 
 if __name__ == "__main__":
     options = parse()
-    runner = Command(
-        marker=options.marker,
-        cron_path=options.cron_path,
-        substitutions=os.environ,
-        user=options.user,
-    )
-    returncode = runner.run()
-    if returncode != 0:
-        print("Error while installing crontab !", file=sys.stderr)
+    try:
+        runner = Command(
+            marker=options.marker,
+            cron_path=options.cron_path,
+            substitutions=os.environ,
+            user=options.user,
+            remove=options.remove,
+        )
+        returncode = runner.run()
+        if returncode != 0:
+            print("Error while installing crontab !", file=sys.stderr)
+    except OptionError as e:
+        print("Error:", str(e), file=sys.stderr)
+        returncode = -1
     exit(returncode)
